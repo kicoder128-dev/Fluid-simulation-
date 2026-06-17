@@ -2,15 +2,23 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Hydro-Logic: Fluid Automation Puzzle</title>
     <style>
         :root {
-            --bg: #1a1a2e;
-            --panel: #16213e;
-            --highlight: #e94560;
-            --text: #e0e0e0;
-            --gold: #f0c040;
+            --bg: #0a0e27;
+            --panel: #111640;
+            --highlight: #ff6b6b;
+            --text: #e8e8f0;
+            --gold: #ffd93d;
+            --blue-glow: #4a90d9;
+            --red-glow: #ff4757;
+            --purple-glow: #a855f7;
+            --green-glow: #22c55e;
+            --cell-bg: #1a1f3a;
+            --grid-border: #2a2f4a;
+            --success: #22c55e;
+            --error: #ef4444;
         }
 
         * {
@@ -21,14 +29,53 @@
 
         body {
             background: var(--bg);
+            background-image:
+                radial-gradient(ellipse at 20% 50%, rgba(74, 144, 217, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(168, 85, 247, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 80%, rgba(255, 71, 87, 0.06) 0%, transparent 50%),
+                linear-gradient(180deg, #0a0e27 0%, #0d1235 50%, #0a0e27 100%);
             color: var(--text);
-            font-family: 'Segoe UI', 'Courier New', monospace;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             user-select: none;
             -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+
+        /* Animated background particles */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                radial-gradient(2px 2px at 20% 30%, rgba(74, 144, 217, 0.3), transparent),
+                radial-gradient(2px 2px at 40% 70%, rgba(255, 71, 87, 0.3), transparent),
+                radial-gradient(2px 2px at 60% 20%, rgba(168, 85, 247, 0.3), transparent),
+                radial-gradient(2px 2px at 80% 60%, rgba(34, 197, 94, 0.3), transparent),
+                radial-gradient(1px 1px at 10% 80%, rgba(255, 217, 61, 0.3), transparent),
+                radial-gradient(1px 1px at 90% 40%, rgba(74, 144, 217, 0.3), transparent),
+                radial-gradient(1px 1px at 50% 10%, rgba(255, 71, 87, 0.3), transparent),
+                radial-gradient(1px 1px at 30% 90%, rgba(168, 85, 247, 0.3), transparent);
+            pointer-events: none;
+            z-index: 0;
+            animation: particleFloat 20s ease-in-out infinite;
+        }
+
+        @keyframes particleFloat {
+            0%,
+            100% {
+                opacity: 0.6;
+            }
+            50% {
+                opacity: 1;
+            }
         }
 
         .container {
@@ -37,241 +84,579 @@
             align-items: flex-start;
             flex-wrap: wrap;
             justify-content: center;
-            padding: 20px;
+            padding: 15px;
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 900px;
         }
 
         .game-area {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
+            flex: 1;
+            min-width: 300px;
+            max-width: 520px;
+        }
+
+        .game-title {
+            text-align: center;
+            font-size: 1.6em;
+            font-weight: 700;
+            letter-spacing: 3px;
+            background: linear-gradient(135deg, #4a90d9, #a855f7, #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: none;
+            margin-bottom: -4px;
+        }
+
+        .game-subtitle {
+            text-align: center;
+            font-size: 0.7em;
+            letter-spacing: 4px;
+            color: #5a6080;
+            text-transform: uppercase;
         }
 
         .grid-container {
             position: relative;
-            background: #0a0a1a;
-            border: 3px solid #333;
-            border-radius: 8px;
+            background: #0d1125;
+            border: 2px solid var(--grid-border);
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 0 30px rgba(233, 68, 96, 0.2);
+            box-shadow:
+                0 0 40px rgba(74, 144, 217, 0.1),
+                0 0 80px rgba(168, 85, 247, 0.05),
+                inset 0 0 40px rgba(0, 0, 0, 0.3);
+            transition: box-shadow 0.3s;
+        }
+
+        .grid-container:hover {
+            box-shadow:
+                0 0 50px rgba(74, 144, 217, 0.15),
+                0 0 100px rgba(168, 85, 247, 0.08),
+                inset 0 0 40px rgba(0, 0, 0, 0.3);
         }
 
         canvas {
             display: block;
             cursor: crosshair;
-            width: 480px;
-            height: 320px;
+            width: 100%;
+            height: auto;
+            image-rendering: auto;
+        }
+
+        .status-bar {
+            background: #0d1125;
+            border: 1px solid var(--grid-border);
+            border-radius: 10px;
+            padding: 12px 16px;
+            text-align: center;
+            font-size: 0.9em;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .status-bar.success {
+            background: #0a1a0f;
+            border-color: var(--success);
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
+            animation: successPulse 2s ease-in-out infinite;
+        }
+        .status-bar.error {
+            background: #1a0a0a;
+            border-color: var(--error);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+            animation: errorShake 0.5s ease-in-out;
+        }
+        .status-bar.info {
+            background: #0d1125;
+            border-color: var(--gold);
+            box-shadow: 0 0 15px rgba(255, 217, 61, 0.1);
+        }
+
+        @keyframes successPulse {
+            0%,
+            100% {
+                box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
+            }
+            50% {
+                box-shadow: 0 0 35px rgba(34, 197, 94, 0.4);
+            }
+        }
+        @keyframes errorShake {
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+            25% {
+                transform: translateX(-5px);
+            }
+            75% {
+                transform: translateX(5px);
+            }
+        }
+
+        .status-icon {
+            font-size: 1.3em;
+        }
+        .status-text {
+            font-weight: 500;
         }
 
         .panel {
             background: var(--panel);
-            border-radius: 12px;
+            border-radius: 16px;
             padding: 20px;
-            min-width: 280px;
-            max-width: 320px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            border: 1px solid #2a2a4a;
+            width: 300px;
+            flex-shrink: 0;
+            box-shadow:
+                0 20px 50px rgba(0, 0, 0, 0.4),
+                0 0 30px rgba(74, 144, 217, 0.05);
+            border: 1px solid #1e2450;
+            position: relative;
+            overflow: hidden;
         }
 
-        .panel h2 {
-            font-size: 1.3em;
-            margin-bottom: 12px;
-            color: var(--highlight);
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 20%, rgba(74, 144, 217, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 70% 80%, rgba(168, 85, 247, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #1e2450;
+            position: relative;
+            z-index: 1;
+        }
+
+        .panel-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #4a90d9, #a855f7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+        }
+
+        .panel-title {
+            font-size: 1.2em;
+            font-weight: 700;
             letter-spacing: 2px;
-            text-transform: uppercase;
-            border-bottom: 2px solid #2a2a4a;
-            padding-bottom: 8px;
+            color: #c8c8e0;
         }
 
-        .tool-section h3 {
-            font-size: 0.85em;
+        .level-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, rgba(255, 217, 61, 0.15), rgba(255, 107, 107, 0.1));
+            border: 1px solid rgba(255, 217, 61, 0.3);
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 0.75em;
+            color: var(--gold);
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .level-info-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 14px;
+            border: 1px solid #1e2450;
+            position: relative;
+            z-index: 1;
+        }
+        .level-info-card h3 {
+            color: #e0e0f0;
+            margin-bottom: 6px;
+            font-size: 0.95em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .level-info-card p {
+            font-size: 0.82em;
+            color: #9090b0;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .fluid-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            vertical-align: middle;
+            margin: 0 2px;
+            box-shadow: 0 0 8px currentColor;
+        }
+        .fluid-dot.blue {
+            background: #4a90d9;
+            box-shadow: 0 0 10px #4a90d9;
+        }
+        .fluid-dot.red {
+            background: #ff4757;
+            box-shadow: 0 0 10px #ff4757;
+        }
+        .fluid-dot.purple {
+            background: #a855f7;
+            box-shadow: 0 0 10px #a855f7;
+        }
+        .fluid-dot.green {
+            background: #22c55e;
+            box-shadow: 0 0 10px #22c55e;
+        }
+        .fluid-dot.yellow {
+            background: #ffd93d;
+            box-shadow: 0 0 10px #ffd93d;
+        }
+
+        .section-label {
+            font-size: 0.7em;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: #888;
+            letter-spacing: 2px;
+            color: #6a6a8a;
             margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
         }
 
         .tool-buttons {
             display: flex;
             flex-wrap: wrap;
             gap: 6px;
+            position: relative;
+            z-index: 1;
         }
 
         .tool-btn {
-            padding: 8px 12px;
-            border: 2px solid #444;
-            background: #1a1a30;
-            color: #ccc;
-            border-radius: 6px;
+            padding: 10px 12px;
+            border: 1.5px solid #2a2a50;
+            background: rgba(20, 20, 50, 0.6);
+            color: #b0b0d0;
+            border-radius: 10px;
             cursor: pointer;
-            font-size: 0.8em;
+            font-size: 0.78em;
             font-family: inherit;
-            transition: all 0.2s;
+            transition: all 0.25s;
             white-space: nowrap;
+            flex: 1;
+            min-width: 55px;
+            text-align: center;
+            backdrop-filter: blur(5px);
+            position: relative;
+            overflow: hidden;
         }
-
+        .tool-btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent, rgba(255, 255, 255, 0.03));
+            pointer-events: none;
+        }
         .tool-btn:hover {
-            border-color: #888;
-            background: #222240;
+            border-color: #4a4a70;
+            background: rgba(30, 30, 60, 0.8);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        .tool-btn:active {
+            transform: scale(0.96);
         }
         .tool-btn.active {
             border-color: var(--highlight);
-            background: #2a1a30;
+            background: rgba(255, 107, 107, 0.15);
             color: #fff;
-            box-shadow: 0 0 12px rgba(233, 68, 96, 0.4);
+            box-shadow: 0 0 20px rgba(255, 107, 107, 0.25);
+            font-weight: 600;
         }
         .tool-btn.delete-btn {
-            border-color: #c0392b;
-            color: #e74c3c;
+            border-color: #5a2020;
+            color: #ff6b6b;
         }
         .tool-btn.delete-btn.active {
-            background: #3a1010;
-            box-shadow: 0 0 15px rgba(231, 76, 60, 0.5);
+            border-color: #ff4444;
+            background: rgba(255, 68, 68, 0.2);
+            box-shadow: 0 0 20px rgba(255, 68, 68, 0.35);
         }
 
         .btn {
-            padding: 10px 20px;
+            padding: 12px 20px;
             border: none;
-            border-radius: 6px;
+            border-radius: 10px;
             cursor: pointer;
-            font-size: 0.9em;
+            font-size: 0.85em;
             font-family: inherit;
-            font-weight: bold;
+            font-weight: 600;
             letter-spacing: 1px;
-            transition: all 0.2s;
+            transition: all 0.25s;
             width: 100%;
             margin-top: 6px;
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+        }
+        .btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        .btn:active {
+            transform: scale(0.97);
         }
 
         .btn-run {
-            background: #27ae60;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
             color: white;
+            box-shadow: 0 4px 20px rgba(34, 197, 94, 0.3);
+            font-size: 0.9em;
         }
         .btn-run:hover {
-            background: #2ecc71;
-            box-shadow: 0 0 20px rgba(46, 204, 113, 0.4);
+            box-shadow: 0 6px 25px rgba(34, 197, 94, 0.45);
+            transform: translateY(-2px);
         }
         .btn-run.running {
-            background: #e74c3c;
-            animation: pulse 0.8s infinite;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            animation: runPulse 1s infinite;
+            box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
         }
-        .btn-reset {
-            background: #555;
-            color: white;
-        }
-        .btn-reset:hover {
-            background: #777;
-        }
-
-        @keyframes pulse {
+        @keyframes runPulse {
             0%,
             100% {
-                box-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+                box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
             }
             50% {
-                box-shadow: 0 0 30px rgba(231, 76, 60, 0.9);
+                box-shadow: 0 4px 35px rgba(239, 68, 68, 0.7);
             }
         }
 
-        .level-info {
-            background: #111130;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            border-left: 4px solid var(--gold);
+        .btn-secondary {
+            background: rgba(40, 40, 70, 0.6);
+            color: #b0b0d0;
+            border: 1px solid #2a2a50;
+            backdrop-filter: blur(5px);
         }
-        .level-info h3 {
-            color: var(--gold);
-            margin-bottom: 4px;
-            font-size: 1em;
-        }
-        .level-info p {
-            font-size: 0.85em;
-            color: #aaa;
-            line-height: 1.5;
+        .btn-secondary:hover {
+            background: rgba(50, 50, 80, 0.8);
+            border-color: #4a4a70;
         }
 
-        .status {
-            font-size: 0.85em;
-            color: #888;
-            margin-top: 8px;
-            text-align: center;
-            min-height: 24px;
-            padding: 4px;
-            border-radius: 4px;
-        }
-        .status.success {
-            color: #2ecc71;
-            font-weight: bold;
-            background: #0a2a0a;
-        }
-        .status.fail {
-            color: #e74c3c;
-            font-weight: bold;
-            background: #2a0a0a;
-        }
-
-        .legend {
+        .nav-buttons {
             display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            font-size: 0.75em;
-            color: #aaa;
-            margin-top: 12px;
+            gap: 8px;
+            margin-top: 10px;
+            position: relative;
+            z-index: 1;
         }
-        .legend span {
+        .nav-buttons .btn {
+            flex: 1;
+            margin-top: 0;
+        }
+
+        .legend-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            font-size: 0.7em;
+            color: #8080a0;
+            margin-top: 12px;
+            position: relative;
+            z-index: 1;
+            justify-content: center;
+        }
+        .legend-item {
             display: flex;
             align-items: center;
             gap: 4px;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 4px 10px;
+            border-radius: 12px;
+            border: 1px solid #1e2450;
         }
-        .legend .dot {
+        .legend-dot {
             display: inline-block;
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a0a0a;
+            border: 1px solid #ef4444;
+            color: #ff6b6b;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            z-index: 100;
+            box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);
+            animation: toastIn 0.3s ease-out, toastOut 0.3s ease-in 2.5s forwards;
+            font-size: 0.9em;
+            text-align: center;
+        }
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+        @keyframes toastOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-20px);
+            }
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                align-items: center;
+                padding: 10px;
+                gap: 12px;
+            }
+            .panel {
+                width: 100%;
+                max-width: 500px;
+                padding: 16px;
+                border-radius: 14px;
+            }
+            .game-area {
+                width: 100%;
+                max-width: 500px;
+                min-width: unset;
+            }
+            .game-title {
+                font-size: 1.3em;
+            }
+            .tool-btn {
+                padding: 10px 8px;
+                font-size: 0.72em;
+                border-radius: 8px;
+            }
+            .btn {
+                padding: 14px 16px;
+                font-size: 0.85em;
+            }
+            .grid-container {
+                border-radius: 10px;
+            }
+            .status-bar {
+                font-size: 0.8em;
+                padding: 10px 12px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .container {
+                padding: 6px;
+                gap: 8px;
+            }
+            .panel {
+                padding: 12px;
+                border-radius: 12px;
+            }
+            .tool-btn {
+                padding: 8px 6px;
+                font-size: 0.68em;
+                border-radius: 7px;
+            }
+            .game-title {
+                font-size: 1.1em;
+                letter-spacing: 1px;
+            }
+            .btn {
+                padding: 12px 14px;
+                font-size: 0.8em;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="game-area">
+            <div class="game-title">⚗️ HYDRO-LOGIC</div>
+            <div class="game-subtitle">Fluid Automation Puzzle</div>
             <div class="grid-container">
                 <canvas id="gridCanvas"></canvas>
             </div>
-            <div class="status" id="status">Click grid to place tubes. Connect inputs → outputs.</div>
+            <div class="status-bar" id="statusBar">
+                <span class="status-icon">💡</span>
+                <span class="status-text" id="statusText">Click grid to place tubes</span>
+            </div>
         </div>
 
         <div class="panel">
-            <h2>⚙️ Hydro-Logic</h2>
-
-            <div class="level-info" id="levelInfo">
-                <h3>Level 1: Simple Route</h3>
-                <p>🔵 Blue Input → 🔵 Blue Output<br>Connect them with tubes.</p>
+            <div class="panel-header">
+                <div class="panel-icon">⚙️</div>
+                <div class="panel-title">CONTROLS</div>
             </div>
 
-            <div class="tool-section">
-                <h3>🔧 Place Tool (keys 1-4, D)</h3>
-                <div class="tool-buttons" id="toolButtons">
-                    <button class="tool-btn active" data-tool="tube">1: Tube</button>
-                    <button class="tool-btn" data-tool="valve">2: Valve</button>
-                    <button class="tool-btn" data-tool="mixer">3: Mixer</button>
-                    <button class="tool-btn" data-tool="delay">4: Delay</button>
-                    <button class="tool-btn delete-btn" data-tool="delete">D: Delete</button>
-                </div>
+            <div class="level-badge" id="levelBadge">LEVEL 1</div>
+
+            <div class="level-info-card" id="levelInfo">
+                <h3>🔵 Simple Route</h3>
+                <p>Connect Blue Input → Blue Output</p>
             </div>
 
-            <button class="btn btn-run" id="btnRun">▶ Run Simulation (Space)</button>
-            <button class="btn btn-reset" id="btnReset">↺ Clear All (R)</button>
-
-            <div style="margin-top:10px; display:flex; gap:8px;">
-                <button class="btn btn-reset" id="btnPrev" style="flex:1;">◀ Prev</button>
-                <button class="btn btn-reset" id="btnNext" style="flex:1;">Next ▶</button>
+            <div class="section-label">🔧 Tools (keys 1-4, D)</div>
+            <div class="tool-buttons" id="toolButtons">
+                <button class="tool-btn active" data-tool="tube">🔗 Tube</button>
+                <button class="tool-btn" data-tool="valve">🚦 Valve</button>
+                <button class="tool-btn" data-tool="mixer">⚗️ Mixer</button>
+                <button class="tool-btn" data-tool="delay">⏳ Delay</button>
+                <button class="tool-btn delete-btn" data-tool="delete">🗑️ Delete</button>
             </div>
 
-            <div class="legend">
-                <span><span class="dot" style="background:#4a90d9;"></span> Blue</span>
-                <span><span class="dot" style="background:#e74c3c;"></span> Red</span>
-                <span><span class="dot" style="background:#8e44ad;"></span> Purple</span>
-                <span><span class="dot" style="background:#2ecc71;"></span> Green</span>
+            <button class="btn btn-run" id="btnRun">▶ RUN SIMULATION</button>
+            <button class="btn btn-secondary" id="btnReset">🔄 Clear Grid</button>
+
+            <div class="nav-buttons">
+                <button class="btn btn-secondary" id="btnPrev">◀ Prev</button>
+                <button class="btn btn-secondary" id="btnNext">Next ▶</button>
+            </div>
+
+            <div class="legend-row">
+                <span class="legend-item"><span class="legend-dot" style="background:#4a90d9;box-shadow:0 0 6px #4a90d9;"></span> Blue</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#ff4757;box-shadow:0 0 6px #ff4757;"></span> Red</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#a855f7;box-shadow:0 0 6px #a855f7;"></span> Purple</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#22c55e;box-shadow:0 0 6px #22c55e;"></span> Green</span>
             </div>
         </div>
     </div>
@@ -281,19 +666,21 @@
             // ==================== GAME ENGINE ====================
             const canvas = document.getElementById('gridCanvas');
             const ctx = canvas.getContext('2d');
-            const statusEl = document.getElementById('status');
+            const statusBar = document.getElementById('statusBar');
+            const statusText = document.getElementById('statusText');
+            const statusIcon = document.querySelector('.status-icon');
             const btnRun = document.getElementById('btnRun');
             const btnReset = document.getElementById('btnReset');
             const btnPrev = document.getElementById('btnPrev');
             const btnNext = document.getElementById('btnNext');
             const levelInfo = document.getElementById('levelInfo');
+            const levelBadge = document.getElementById('levelBadge');
             const toolButtons = document.getElementById('toolButtons');
 
             const CELL_SIZE = 40;
             const GRID_COLS = 12;
             const GRID_ROWS = 8;
 
-            // Set actual canvas size (not CSS size)
             canvas.width = GRID_COLS * CELL_SIZE;
             canvas.height = GRID_ROWS * CELL_SIZE;
 
@@ -305,24 +692,25 @@
             let grid = [];
             let fluidParticles = [];
             let simTick = 0;
+            let winDetected = false;
 
             // --- Level Definitions ---
             const levels = [{
-                name: 'Level 1: Simple Route',
+                name: 'Simple Route',
                 description: '🔵 Blue Input → 🔵 Blue Output<br>Connect them with tubes.',
                 inputs: [{ row: 3, col: 0, color: 'blue', pressure: 'continuous' }],
                 outputs: [{ row: 3, col: 11, color: 'blue', required: 'blue' }],
             }, {
-                name: 'Level 2: Mix Colors',
-                description: '🔵 Blue + 🔴 Red → 🟣 Purple Output<br>Use a Mixer to combine them.',
+                name: 'Mix Colors',
+                description: '🔵 Blue + 🔴 Red → 🟣 Purple<br>Use a <b>Mixer</b> to combine them.',
                 inputs: [
                     { row: 1, col: 0, color: 'blue', pressure: 'continuous' },
                     { row: 5, col: 0, color: 'red', pressure: 'continuous' },
                 ],
                 outputs: [{ row: 3, col: 11, color: 'purple', required: 'purple' }],
             }, {
-                name: 'Level 3: Keep Separate',
-                description: '🔵 Blue → Blue Output<br>🔴 Red → Red Output<br>Keep them separate!',
+                name: 'Keep Separate',
+                description: '🔵 Blue → Blue Output<br>🔴 Red → Red Output<br>Don\'t mix them!',
                 inputs: [
                     { row: 1, col: 0, color: 'blue', pressure: 'continuous' },
                     { row: 5, col: 0, color: 'red', pressure: 'continuous' },
@@ -332,19 +720,37 @@
                     { row: 5, col: 11, color: 'red', required: 'red' },
                 ],
             }, {
-                name: 'Level 4: The Purple Drop',
-                description: '🔵 Blue (continuous) + 🔴 Red (pulses)<br>→ 🟣 Purple Output<br>Time it right! Red pulses every few ticks.',
+                name: 'The Purple Drop',
+                description: '🔵 Blue (continuous)<br>🔴 Red (pulses every 3 ticks)<br>→ 🟣 Purple Output<br>Time it right!',
                 inputs: [
                     { row: 1, col: 0, color: 'blue', pressure: 'continuous' },
                     { row: 5, col: 0, color: 'red', pressure: 'intermittent', interval: 3 },
                 ],
                 outputs: [{ row: 3, col: 11, color: 'purple', required: 'purple' }],
             }, {
-                name: 'Level 5: Delay Buffer',
-                description: '🔵 Blue (pulses) → 🟦 Delay Tank → 🔵 Output<br>Use a Delay Tank to smooth the output.',
+                name: 'Delay Buffer',
+                description: '🔵 Blue (pulses) → ⏳ Delay → 🔵 Output<br>Use a Delay Tank to smooth flow.',
                 inputs: [{ row: 3, col: 0, color: 'blue', pressure: 'intermittent', interval: 2 }],
                 outputs: [{ row: 3, col: 11, color: 'blue', required: 'blue' }],
             }, ];
+
+            // --- Toast ---
+            function showToast(message) {
+                const existing = document.querySelector('.toast');
+                if (existing) existing.remove();
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                toast.textContent = message;
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 3000);
+            }
+
+            // --- Status Bar ---
+            function setStatus(type, icon, text) {
+                statusBar.className = 'status-bar ' + type;
+                statusIcon.textContent = icon;
+                statusText.textContent = text;
+            }
 
             // --- Grid Functions ---
             function createEmptyGrid() {
@@ -365,10 +771,10 @@
                 stopSimulation();
                 fluidParticles = [];
                 simTick = 0;
-                statusEl.textContent = 'Click grid to place tubes. Connect inputs → outputs.';
-                statusEl.className = 'status';
+                winDetected = false;
+                setStatus('info', '💡', 'Click grid to place tubes. Connect inputs → outputs.');
+                levelBadge.textContent = 'LEVEL ' + (levelIndex + 1);
 
-                // Place inputs
                 level.inputs.forEach(inp => {
                     grid[inp.row][inp.col] = {
                         type: 'input',
@@ -381,7 +787,6 @@
                     };
                 });
 
-                // Place outputs
                 level.outputs.forEach(out => {
                     grid[out.row][out.col] = {
                         type: 'output',
@@ -415,8 +820,18 @@
             function draw() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+                // Draw subtle grid background
+                for (let r = 0; r < GRID_ROWS; r++) {
+                    for (let c = 0; c < GRID_COLS; c++) {
+                        const x = c * CELL_SIZE;
+                        const y = r * CELL_SIZE;
+                        ctx.fillStyle = (r + c) % 2 === 0 ? '#0f1430' : '#111638';
+                        ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+                    }
+                }
+
                 // Grid lines
-                ctx.strokeStyle = '#1a1a35';
+                ctx.strokeStyle = '#1a1f3a';
                 ctx.lineWidth = 0.5;
                 for (let r = 0; r <= GRID_ROWS; r++) {
                     ctx.beginPath();
@@ -437,22 +852,13 @@
                         const cell = grid[r][c];
                         const x = c * CELL_SIZE;
                         const y = r * CELL_SIZE;
-
                         if (!cell) continue;
-
-                        if (cell.type === 'input') {
-                            drawInputOutput(x, y, cell.color, true);
-                        } else if (cell.type === 'output') {
-                            drawInputOutput(x, y, cell.color, false);
-                        } else if (cell.type === 'tube') {
-                            drawTube(x, y, cell);
-                        } else if (cell.type === 'valve') {
-                            drawValve(x, y, cell);
-                        } else if (cell.type === 'mixer') {
-                            drawMixer(x, y, cell);
-                        } else if (cell.type === 'delay') {
-                            drawDelay(x, y, cell);
-                        }
+                        if (cell.type === 'input') drawInputOutput(x, y, cell.color, true);
+                        else if (cell.type === 'output') drawInputOutput(x, y, cell.color, false);
+                        else if (cell.type === 'tube') drawTube(x, y, cell);
+                        else if (cell.type === 'valve') drawValve(x, y, cell);
+                        else if (cell.type === 'mixer') drawMixer(x, y, cell);
+                        else if (cell.type === 'delay') drawDelay(x, y, cell);
                     }
                 }
 
@@ -461,14 +867,18 @@
                     fluidParticles.forEach(p => {
                         const px = p.col * CELL_SIZE + CELL_SIZE / 2;
                         const py = p.row * CELL_SIZE + CELL_SIZE / 2;
-                        ctx.fillStyle = getColorHex(p.color);
+                        const glow = ctx.createRadialGradient(px, py, 2, px, py, 10);
+                        glow.addColorStop(0, getColorHex(p.color));
+                        glow.addColorStop(1, 'transparent');
+                        ctx.fillStyle = glow;
+                        ctx.beginPath();
+                        ctx.arc(px, py, 10, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillStyle = '#fff';
                         ctx.globalAlpha = 0.9;
                         ctx.beginPath();
-                        ctx.arc(px, py, 7, 0, Math.PI * 2);
+                        ctx.arc(px, py, 4, 0, Math.PI * 2);
                         ctx.fill();
-                        ctx.strokeStyle = '#fff';
-                        ctx.lineWidth = 1.5;
-                        ctx.stroke();
                         ctx.globalAlpha = 1;
                     });
                 }
@@ -477,11 +887,24 @@
             function drawInputOutput(x, y, color, isInput) {
                 const cx = x + CELL_SIZE / 2;
                 const cy = y + CELL_SIZE / 2;
-                const r = 14;
+                const r = 15;
+                const colHex = getColorHex(color);
 
-                ctx.fillStyle = '#1a1a30';
-                ctx.strokeStyle = getColorHex(color);
-                ctx.lineWidth = 3;
+                // Glow
+                const glow = ctx.createRadialGradient(cx, cy, r * 0.5, cx, cy, r * 1.5);
+                glow.addColorStop(0, colHex + '60');
+                glow.addColorStop(1, 'transparent');
+                ctx.fillStyle = glow;
+                ctx.beginPath();
+                ctx.arc(cx, cy, r * 1.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Shape
+                ctx.fillStyle = '#0d1125';
+                ctx.strokeStyle = colHex;
+                ctx.lineWidth = 2.5;
+                ctx.shadowColor = colHex;
+                ctx.shadowBlur = 8;
                 ctx.beginPath();
                 if (isInput) {
                     ctx.moveTo(cx, cy - r);
@@ -494,24 +917,26 @@
                 }
                 ctx.fill();
                 ctx.stroke();
+                ctx.shadowBlur = 0;
 
-                ctx.fillStyle = getColorHex(color);
+                // Inner color
+                ctx.fillStyle = colHex;
                 ctx.globalAlpha = 0.7;
                 ctx.beginPath();
                 if (isInput) {
-                    ctx.moveTo(cx, cy - r + 4);
-                    ctx.lineTo(cx + r - 4, cy);
-                    ctx.lineTo(cx, cy + r - 4);
-                    ctx.lineTo(cx - r + 4, cy);
+                    ctx.moveTo(cx, cy - r + 5);
+                    ctx.lineTo(cx + r - 5, cy);
+                    ctx.lineTo(cx, cy + r - 5);
+                    ctx.lineTo(cx - r + 5, cy);
                     ctx.closePath();
                 } else {
-                    ctx.arc(cx, cy, r - 4, 0, Math.PI * 2);
+                    ctx.arc(cx, cy, r - 5, 0, Math.PI * 2);
                 }
                 ctx.fill();
                 ctx.globalAlpha = 1;
 
                 ctx.fillStyle = '#fff';
-                ctx.font = 'bold 9px monospace';
+                ctx.font = 'bold 9px "Segoe UI", monospace';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(isInput ? 'IN' : 'OUT', cx, cy);
@@ -522,82 +947,116 @@
                 const cy = y + CELL_SIZE / 2;
                 const conns = cell.connections || [];
 
-                ctx.strokeStyle = '#5a7a9a';
-                ctx.lineWidth = 6;
-                ctx.lineCap = 'round';
+                // Draw connection pipes with gradient
                 conns.forEach(dir => {
+                    const grad = ctx.createLinearGradient(cx, cy,
+                        dir === 'e' ? x + CELL_SIZE : dir === 'w' ? x : cx,
+                        dir === 's' ? y + CELL_SIZE : dir === 'n' ? y : cy);
+                    grad.addColorStop(0, '#3a5a80');
+                    grad.addColorStop(1, '#2a4a6a');
+                    ctx.strokeStyle = grad;
+                    ctx.lineWidth = 7;
+                    ctx.lineCap = 'round';
                     ctx.beginPath();
                     ctx.moveTo(cx, cy);
-                    if (dir === 'n') ctx.lineTo(cx, y - 2);
-                    if (dir === 's') ctx.lineTo(cx, y + CELL_SIZE + 2);
-                    if (dir === 'e') ctx.lineTo(x + CELL_SIZE + 2, cy);
-                    if (dir === 'w') ctx.lineTo(x - 2, cy);
+                    if (dir === 'n') ctx.lineTo(cx, y - 3);
+                    if (dir === 's') ctx.lineTo(cx, y + CELL_SIZE + 3);
+                    if (dir === 'e') ctx.lineTo(x + CELL_SIZE + 3, cy);
+                    if (dir === 'w') ctx.lineTo(x - 3, cy);
                     ctx.stroke();
                 });
 
-                ctx.fillStyle = '#3a5a7a';
+                // Center hub
+                const hubGrad = ctx.createRadialGradient(cx, cy, 2, cx, cy, 7);
+                hubGrad.addColorStop(0, '#5a8ab0');
+                hubGrad.addColorStop(1, '#2a4a6a');
+                ctx.fillStyle = hubGrad;
                 ctx.beginPath();
-                ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+                ctx.arc(cx, cy, 7, 0, Math.PI * 2);
                 ctx.fill();
+                ctx.strokeStyle = '#4a7a9a';
+                ctx.lineWidth = 1;
+                ctx.stroke();
 
                 if (isRunning && cell._hasFluid) {
-                    ctx.fillStyle = getColorHex(cell._fluidColor || 'blue');
-                    ctx.globalAlpha = 0.8;
+                    const col = getColorHex(cell._fluidColor || 'blue');
+                    const glow = ctx.createRadialGradient(cx, cy, 1, cx, cy, 6);
+                    glow.addColorStop(0, '#fff');
+                    glow.addColorStop(0.5, col);
+                    glow.addColorStop(1, 'transparent');
+                    ctx.fillStyle = glow;
                     ctx.beginPath();
-                    ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+                    ctx.arc(cx, cy, 6, 0, Math.PI * 2);
                     ctx.fill();
-                    ctx.globalAlpha = 1;
                 }
             }
 
             function drawValve(x, y, cell) {
                 const cx = x + CELL_SIZE / 2;
                 const cy = y + CELL_SIZE / 2;
+                const isOpen = cell.state === 'open';
 
-                ctx.fillStyle = '#2a1a1a';
-                ctx.fillRect(x + 4, y + 4, CELL_SIZE - 8, CELL_SIZE - 8);
-                ctx.strokeStyle = cell.state === 'open' ? '#2ecc71' : '#e74c3c';
+                ctx.fillStyle = '#1a1020';
+                ctx.strokeStyle = isOpen ? '#22c55e' : '#ef4444';
                 ctx.lineWidth = 2;
-                ctx.strokeRect(x + 4, y + 4, CELL_SIZE - 8, CELL_SIZE - 8);
+                ctx.shadowColor = isOpen ? '#22c55e' : '#ef4444';
+                ctx.shadowBlur = 6;
+                roundRect(x + 5, y + 5, CELL_SIZE - 10, CELL_SIZE - 10, 6);
+                ctx.fill();
+                ctx.stroke();
+                ctx.shadowBlur = 0;
 
-                ctx.fillStyle = cell.state === 'open' ? '#2ecc71' : '#e74c3c';
+                ctx.fillStyle = isOpen ? '#22c55e' : '#ef4444';
                 ctx.beginPath();
-                ctx.moveTo(cx, cy - 10);
-                ctx.lineTo(cx + 8, cy + 6);
-                ctx.lineTo(cx - 8, cy + 6);
+                ctx.moveTo(cx, cy - 9);
+                ctx.lineTo(cx + 7, cy + 5);
+                ctx.lineTo(cx - 7, cy + 5);
                 ctx.closePath();
                 ctx.fill();
 
                 ctx.fillStyle = '#fff';
-                ctx.font = '8px monospace';
+                ctx.font = 'bold 8px monospace';
                 ctx.textAlign = 'center';
-                ctx.fillText(cell.state === 'open' ? 'ON' : 'OFF', cx, cy + 16);
+                ctx.textBaseline = 'middle';
+                ctx.fillText(isOpen ? 'ON' : 'OFF', cx, cy + 14);
             }
 
             function drawMixer(x, y, cell) {
                 const cx = x + CELL_SIZE / 2;
                 const cy = y + CELL_SIZE / 2;
 
-                ctx.fillStyle = '#1a1a2a';
+                const glow = ctx.createRadialGradient(cx, cy, 8, cx, cy, 18);
+                glow.addColorStop(0, '#a855f740');
+                glow.addColorStop(1, 'transparent');
+                ctx.fillStyle = glow;
                 ctx.beginPath();
-                ctx.arc(cx, cy, 14, 0, Math.PI * 2);
+                ctx.arc(cx, cy, 18, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.strokeStyle = '#8e44ad';
-                ctx.lineWidth = 2;
-                ctx.stroke();
 
-                ctx.strokeStyle = '#fff';
+                ctx.fillStyle = '#151028';
+                ctx.strokeStyle = '#a855f7';
+                ctx.lineWidth = 2;
+                ctx.shadowColor = '#a855f7';
+                ctx.shadowBlur = 8;
+                ctx.beginPath();
+                ctx.arc(cx, cy, 13, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                ctx.strokeStyle = '#c8c8e0';
                 ctx.lineWidth = 2;
                 ctx.beginPath();
-                ctx.moveTo(cx - 6, cy);
-                ctx.lineTo(cx + 6, cy);
-                ctx.moveTo(cx, cy - 6);
-                ctx.lineTo(cx, cy + 6);
+                ctx.moveTo(cx - 5, cy);
+                ctx.lineTo(cx + 5, cy);
+                ctx.moveTo(cx, cy - 5);
+                ctx.lineTo(cx, cy + 5);
                 ctx.stroke();
 
-                ctx.fillStyle = '#fff';
-                ctx.font = '7px monospace';
+                ctx.fillStyle = '#c8c8e0';
+                ctx.font = 'bold 7px monospace';
                 ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
                 ctx.fillText('MIX', cx, cy + 17);
             }
 
@@ -605,35 +1064,56 @@
                 const cx = x + CELL_SIZE / 2;
                 const cy = y + CELL_SIZE / 2;
 
-                ctx.fillStyle = '#1a2a1a';
-                ctx.fillRect(x + 3, y + 3, CELL_SIZE - 6, CELL_SIZE - 6);
-                ctx.strokeStyle = '#f0c040';
+                ctx.fillStyle = '#101a18';
+                ctx.strokeStyle = '#ffd93d';
                 ctx.lineWidth = 2;
-                ctx.strokeRect(x + 3, y + 3, CELL_SIZE - 6, CELL_SIZE - 6);
+                ctx.shadowColor = '#ffd93d';
+                ctx.shadowBlur = 6;
+                roundRect(x + 4, y + 4, CELL_SIZE - 8, CELL_SIZE - 8, 5);
+                ctx.fill();
+                ctx.stroke();
+                ctx.shadowBlur = 0;
 
                 const capacity = cell.capacity || 3;
                 const stored = cell.stored || 0;
-                const fillHeight = (stored / capacity) * (CELL_SIZE - 14);
-                ctx.fillStyle = '#f0c040';
-                ctx.globalAlpha = 0.6;
-                ctx.fillRect(x + 8, y + CELL_SIZE - 10 - fillHeight, CELL_SIZE - 16, fillHeight);
+                const fillH = (stored / capacity) * (CELL_SIZE - 14);
+                const grad = ctx.createLinearGradient(x, y + CELL_SIZE - 10, x, y + CELL_SIZE - 10 - fillH);
+                grad.addColorStop(0, '#ffd93d');
+                grad.addColorStop(1, '#ff9500');
+                ctx.fillStyle = grad;
+                ctx.globalAlpha = 0.7;
+                ctx.fillRect(x + 9, y + CELL_SIZE - 10 - fillH, CELL_SIZE - 18, fillH);
                 ctx.globalAlpha = 1;
 
                 ctx.fillStyle = '#fff';
-                ctx.font = '8px monospace';
+                ctx.font = 'bold 9px monospace';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(`${stored}/${capacity}`, cx, cy);
             }
 
+            function roundRect(x, y, w, h, r) {
+                ctx.beginPath();
+                ctx.moveTo(x + r, y);
+                ctx.lineTo(x + w - r, y);
+                ctx.arcTo(x + w, y, x + w, y + r, r);
+                ctx.lineTo(x + w, y + h - r);
+                ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+                ctx.lineTo(x + r, y + h);
+                ctx.arcTo(x, y + h, x, y + h - r, r);
+                ctx.lineTo(x, y + r);
+                ctx.arcTo(x, y, x + r, y, r);
+                ctx.closePath();
+            }
+
             function getColorHex(color) {
                 const map = {
                     'blue': '#4a90d9',
-                    'red': '#e74c3c',
-                    'purple': '#8e44ad',
-                    'green': '#2ecc71',
-                    'yellow': '#f0c040',
-                    'orange': '#e67e22',
+                    'red': '#ff4757',
+                    'purple': '#a855f7',
+                    'green': '#22c55e',
+                    'yellow': '#ffd93d',
+                    'orange': '#f97316',
                 };
                 return map[color] || '#888';
             }
@@ -641,25 +1121,28 @@
             function mixColors(c1, c2) {
                 if (!c1 || !c2) return c1 || c2;
                 const pair = [c1, c2].sort().join(',');
-                const mixes = {
-                    'blue,red': 'purple',
-                    'blue,yellow': 'green',
-                    'red,yellow': 'orange',
-                };
+                const mixes = { 'blue,red': 'purple', 'blue,yellow': 'green', 'red,yellow': 'orange' };
                 return mixes[pair] || c1;
             }
 
-            // --- Mouse Interaction ---
-            canvas.addEventListener('click', function(e) {
-                if (isRunning) return;
+            // --- Mouse/Touch Interaction ---
+            function getGridFromEvent(e) {
                 const rect = canvas.getBoundingClientRect();
                 const scaleX = canvas.width / rect.width;
                 const scaleY = canvas.height / rect.height;
-                const x = (e.clientX - rect.left) * scaleX;
-                const y = (e.clientY - rect.top) * scaleY;
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                const x = (clientX - rect.left) * scaleX;
+                const y = (clientY - rect.top) * scaleY;
                 const col = Math.floor(x / CELL_SIZE);
                 const row = Math.floor(y / CELL_SIZE);
+                return { row, col };
+            }
 
+            function handleCanvasClick(e) {
+                if (isRunning) return;
+                e.preventDefault();
+                const { row, col } = getGridFromEvent(e);
                 if (col < 0 || col >= GRID_COLS || row < 0 || row >= GRID_ROWS) return;
 
                 const cell = grid[row][col];
@@ -680,10 +1163,16 @@
                 } else if (currentTool === 'delay') {
                     grid[row][col] = { type: 'delay', capacity: 3, stored: 0, connections: [] };
                 }
-
                 updateAllConnections();
                 draw();
-            });
+            }
+
+            canvas.addEventListener('click', handleCanvasClick);
+            canvas.addEventListener('touchstart', function(e) {
+                if (isRunning) return;
+                e.preventDefault();
+                handleCanvasClick(e);
+            }, { passive: false });
 
             // --- Connection Logic ---
             function updateAllConnections() {
@@ -695,7 +1184,6 @@
                         }
                     }
                 }
-
                 const visited = new Set();
                 for (let r = 0; r < GRID_ROWS; r++) {
                     for (let c = 0; c < GRID_COLS; c++) {
@@ -726,12 +1214,10 @@
                                                 ncell.type)) {
                                             compVisited.add(nkey);
                                             queue.push({ r: nr, c: nc });
-                                            if (grid[cr][cc].connections && !grid[cr][cc].connections.includes(dir)) {
+                                            if (grid[cr][cc].connections && !grid[cr][cc].connections.includes(dir))
                                                 grid[cr][cc].connections.push(dir);
-                                            }
-                                            if (grid[nr][nc].connections && !grid[nr][nc].connections.includes(opp)) {
+                                            if (grid[nr][nc].connections && !grid[nr][nc].connections.includes(opp))
                                                 grid[nr][nc].connections.push(opp);
-                                            }
                                         }
                                     }
                                 }
@@ -744,20 +1230,16 @@
 
             // --- Simulation ---
             function toggleRun() {
-                if (isRunning) {
-                    stopSimulation();
-                } else {
-                    startSimulation();
-                }
+                if (isRunning) { stopSimulation(); } else { startSimulation(); }
             }
 
             function startSimulation() {
                 updateAllConnections();
                 isRunning = true;
-                btnRun.textContent = '⏹ Stop (Space)';
+                winDetected = false;
+                btnRun.textContent = '⏹ STOP SIMULATION';
                 btnRun.classList.add('running');
-                statusEl.textContent = 'Simulation running...';
-                statusEl.className = 'status';
+                setStatus('info', '🔬', 'Simulation running...');
                 resetSimulationState();
                 fluidParticles = [];
                 simTick = 0;
@@ -766,14 +1248,12 @@
 
             function stopSimulation() {
                 isRunning = false;
-                if (simulationInterval) {
-                    clearInterval(simulationInterval);
-                    simulationInterval = null;
-                }
-                btnRun.textContent = '▶ Run Simulation (Space)';
+                if (simulationInterval) { clearInterval(simulationInterval);
+                    simulationInterval = null; }
+                btnRun.textContent = '▶ RUN SIMULATION';
                 btnRun.classList.remove('running');
                 fluidParticles = [];
-                checkWinCondition();
+                if (!winDetected) checkWinCondition();
                 draw();
             }
 
@@ -793,10 +1273,10 @@
             }
 
             function simulateTick() {
+                if (winDetected) return;
                 simTick++;
                 const level = levels[currentLevelIndex];
 
-                // Update inputs
                 level.inputs.forEach(inp => {
                     const cell = grid[inp.row][inp.col];
                     if (!cell) return;
@@ -804,36 +1284,28 @@
                         cell.active = true;
                     } else {
                         cell.tickCounter = (cell.tickCounter || 0) + 1;
-                        const interval = inp.interval || 2;
-                        cell.active = (cell.tickCounter % (interval * 2)) < interval;
+                        cell.active = (cell.tickCounter % (inp.interval * 2)) < inp.interval;
                     }
                 });
 
-                // Reset fluid state
                 for (let r = 0; r < GRID_ROWS; r++) {
                     for (let c = 0; c < GRID_COLS; c++) {
                         const cell = grid[r][c];
-                        if (cell && cell.type !== 'input') {
-                            cell._hasFluid = false;
-                            cell._fluidColor = null;
-                        }
-                        if (cell && cell.type === 'output') {
-                            cell.received = null;
-                        }
+                        if (cell && cell.type !== 'input') { cell._hasFluid = false;
+                            cell._fluidColor = null; }
+                        if (cell && cell.type === 'output') { cell.received = null; }
                     }
                 }
 
                 const newParticles = [];
                 const processed = new Set();
 
-                // Propagate from inputs
                 for (const inp of level.inputs) {
                     const cell = grid[inp.row][inp.col];
                     if (!cell || !cell.active) continue;
                     const startKey = `${inp.row},${inp.col}`;
                     if (processed.has(startKey)) continue;
                     processed.add(startKey);
-
                     cell._hasFluid = true;
                     cell._fluidColor = inp.color;
                     newParticles.push({ row: inp.row, col: inp.col, color: inp.color });
@@ -846,23 +1318,18 @@
                         const { r, c, color } = queue.shift();
                         const cell = grid[r][c];
                         if (!cell) continue;
-
                         if (cell.type === 'output') {
                             cell.received = color;
                             newParticles.push({ row: r, col: c, color });
                             continue;
                         }
-
                         if (cell.type === 'valve' && cell.state === 'closed') continue;
-
                         if (cell.type === 'mixer') {
                             const incomingColors = [];
                             for (const dir of cell.connections) {
                                 const nb = getNeighbor(r, c, dir);
-                                if (nb && grid[nb.r][nb.c] && grid[nb.r][nb.c]._hasFluid && grid[nb.r][nb.c]
-                                    ._fluidColor) {
+                                if (nb && grid[nb.r][nb.c] && grid[nb.r][nb.c]._hasFluid && grid[nb.r][nb.c]._fluidColor)
                                     incomingColors.push(grid[nb.r][nb.c]._fluidColor);
-                                }
                             }
                             const uniqueColors = [...new Set(incomingColors)];
                             if (uniqueColors.length >= 2) {
@@ -873,27 +1340,20 @@
                                     if (nb && !visited.has(`${nb.r},${nb.c}`)) {
                                         visited.add(`${nb.r},${nb.c}`);
                                         queue.push({ r: nb.r, c: nb.c, color: mixed });
-                                        if (grid[nb.r][nb.c]) {
-                                            grid[nb.r][nb.c]._hasFluid = true;
-                                            grid[nb.r][nb.c]._fluidColor = mixed;
-                                        }
+                                        if (grid[nb.r][nb.c]) { grid[nb.r][nb.c]._hasFluid = true;
+                                            grid[nb.r][nb.c]._fluidColor = mixed; }
                                         newParticles.push({ row: nb.r, col: nb.c, color: mixed });
                                     }
                                 }
                                 continue;
                             }
                         }
-
                         if (cell.type === 'delay') {
-                            if (cell.stored < cell.capacity) {
-                                cell.stored++;
+                            if (cell.stored < cell.capacity) { cell.stored++;
                                 cell._fluidColor = color;
-                                newParticles.push({ row: r, col: c, color });
-                                continue;
-                            }
+                                newParticles.push({ row: r, col: c, color }); continue; }
                             cell.stored = cell.capacity;
                         }
-
                         for (const dir of cell.connections) {
                             const nb = getNeighbor(r, c, dir);
                             if (nb && !visited.has(`${nb.r},${nb.c}`)) {
@@ -912,10 +1372,7 @@
 
                 fluidParticles = newParticles;
                 draw();
-
-                if (simTick % 3 === 0) {
-                    checkWinCondition();
-                }
+                if (simTick % 3 === 0) checkWinCondition();
             }
 
             function getNeighbor(r, c, dir) {
@@ -934,9 +1391,12 @@
             }
 
             function checkWinCondition() {
+                if (winDetected) return;
                 const level = levels[currentLevelIndex];
                 let allCorrect = true;
                 let anyReceived = false;
+                let hasError = false;
+                let errorMsg = '';
 
                 for (const out of level.outputs) {
                     const cell = grid[out.row][out.col];
@@ -946,15 +1406,32 @@
                         anyReceived = true;
                     } else {
                         allCorrect = false;
+                        hasError = true;
+                        errorMsg = `Wrong color! Expected ${out.required}, got ${cell.received}`;
                     }
                 }
 
                 if (allCorrect && anyReceived) {
-                    statusEl.textContent = '✅ SUCCESS! Correct output achieved!';
-                    statusEl.className = 'status success';
-                } else if (anyReceived && !allCorrect) {
-                    statusEl.textContent = '⚠️ Contamination! Wrong color at output.';
-                    statusEl.className = 'status fail';
+                    winDetected = true;
+                    setStatus('success', '✅', 'SUCCESS! Correct output achieved! 🎉');
+                    stopSimulation();
+                    showToast('🎉 Puzzle Solved! Great work!');
+                    return;
+                }
+
+                if (hasError && isRunning) {
+                    winDetected = true;
+                    setStatus('error', '⚠️', errorMsg);
+                    stopSimulation();
+                    showToast('❌ ' + errorMsg);
+                    return;
+                }
+
+                if (!anyReceived && simTick > 10 && isRunning) {
+                    winDetected = true;
+                    setStatus('error', '🔌', 'No fluid reaching output! Check connections.');
+                    stopSimulation();
+                    showToast('🔌 No connection to output detected!');
                 }
             }
 
@@ -970,19 +1447,18 @@
             // --- Button Events ---
             btnRun.addEventListener('click', toggleRun);
             btnReset.addEventListener('click', resetGrid);
-            btnPrev.addEventListener('click', function() {
+            btnPrev.addEventListener('click', () => {
                 const idx = (currentLevelIndex - 1 + levels.length) % levels.length;
                 setupLevel(idx);
             });
-            btnNext.addEventListener('click', function() {
+            btnNext.addEventListener('click', () => {
                 const idx = (currentLevelIndex + 1) % levels.length;
                 setupLevel(idx);
             });
 
-            // --- Keyboard Shortcuts ---
+            // --- Keyboard ---
             document.addEventListener('keydown', function(e) {
                 if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-
                 switch (e.key.toLowerCase()) {
                     case '1':
                         currentTool = 'tube';
@@ -1017,12 +1493,8 @@
             // --- Initialize ---
             setupLevel(0);
             draw();
-
-            console.log('🔧 Hydro-Logic ready!');
-            console.log('  Click grid to place components');
-            console.log('  Keys: 1=Tube 2=Valve 3=Mixer 4=Delay D=Delete');
-            console.log('  Space=Run/Stop  R=Reset');
-            console.log('  Connect blue+red through a mixer to make purple!');
+            console.log('⚗️ Hydro-Logic ready!');
+            console.log('  Click grid | Keys: 1-4, D | Space=Run | R=Reset');
         })();
     </script>
 </body>
